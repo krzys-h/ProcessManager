@@ -34,11 +34,15 @@ public class PlayerProcessManager : MonoBehaviour {
 			}
 			objects[process.Key].GetComponent<ProcessObject>().UpdateProcess(process.Value);
 		}
+		List<int> toRemove = new List<int>();
 		foreach (KeyValuePair<int, GameObject> pair in objects) {
 			if (!processes.ContainsKey(pair.Key)) {
 				GameObject.Destroy(pair.Value);
-				objects.Remove(pair.Key);
+				toRemove.Add(pair.Key);
 			}
+		}
+		foreach (int key in toRemove) {
+			objects.Remove(key);
 		}
 	}
 }

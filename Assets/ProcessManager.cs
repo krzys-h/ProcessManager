@@ -281,10 +281,14 @@ public class ProcessManager : MonoBehaviour {
 				Debug.Log ("InvalidOperationException: "+process.Id);
 			}
 		}
+		List<int> toRemove = new List<int> ();
 		foreach (KeyValuePair<int, ProcessData> process in localProcessList) {
 			if (!newProcessList.ContainsKey(process.Key)) {
-				localProcessList.Remove(process.Key);
+				toRemove.Add(process.Key);
 			}
+		}
+		foreach (int key in toRemove) {
+			localProcessList.Remove(key);
 		}
 	}
 
