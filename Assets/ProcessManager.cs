@@ -15,11 +15,20 @@ public class ProcessManager : MonoBehaviour {
 		public long memory;
 	}
 
+	[System.Serializable]
+	public class PeerData {
+		public string address;
+		public int port;
+	}
+
 	const byte MESSAGE_PROCESS_LIST = 1;
 	const byte MESSAGE_KILL_PROCESS = 2;
+	const byte MESSAGE_GET_PEERS = 3;
+	const byte MESSAGE_PEERS = 4;
 
 	int channelId;
 	int hostId;
+	int connectionId;
 
 	PlayerProcessManager localProcessManager;
 	Dictionary<int, PlayerProcessManager> playerProcessManagers = new Dictionary<int, PlayerProcessManager>();
@@ -46,7 +55,7 @@ public class ProcessManager : MonoBehaviour {
 	{
 		Debug.LogError ("Connect: " + remoteIp);
 		byte error = 0;
-		/*int connectionId =*/ NetworkTransport.Connect(hostId, remoteIp, 8888, 0, out error);
+		connectionId = NetworkTransport.Connect(hostId, remoteIp, System.Int32.Parse(serverPort), 0, out error);
 		if (error != 0) {
 			Debug.LogError ("Connection failed "+error);
 			return;
@@ -85,6 +94,12 @@ public class ProcessManager : MonoBehaviour {
 		case NetworkEventType.ConnectEvent:
 			Debug.Log ("Connected");
 			CreateProcessManager(recConnectionId);
+			if (recConnectionId == connectionId) {
+				MemoryStream stream = new MemoryStream();
+				stream.WriteByte (MESSAGE_GET_PEERS);
+				byte[] b = stream.ToArray ();
+				NetworkTransport.Send (hostId, recConnectionId, channelId, b, b.Length, out error);
+			}
 			break;
 		case NetworkEventType.DataEvent:
 			//Debug.Log ("DATA "+dataSize);
@@ -98,6 +113,32 @@ public class ProcessManager : MonoBehaviour {
 			case MESSAGE_KILL_PROCESS:
 				int processId = (int) new BinaryFormatter().Deserialize(stream);
 				KillLocalProcess(processId);
+				break;
+			case MESSAGE_GET_PEERS:
+				Debug.LogError ("Send peer list");
+				Dictionary<int, PeerData> peers = new Dictionary<int, PeerData>();
+				foreach (KeyValuePair<int, PlayerProcessManager> player in playerProcessManagers) {
+					if(player.Key == 0) continue; // ignore local player
+					if(player.Key == recConnectionId) continue; // ignore remote player
+					PeerData peer = new PeerData();
+					UnityEngine.Networking.Types.NetworkID network;
+					UnityEngine.Networking.Types.NodeID dstNode;
+					NetworkTransport.GetConnectionInfo(hostId, player.Key, out peer.address, out peer.port, out network, out dstNode, out error);
+					peers.Add(player.Key, peer);
+				}
+				MemoryStream sendstream = new MemoryStream();
+				sendstream.WriteByte (MESSAGE_PEERS);
+				new BinaryFormatter().Serialize(sendstream, peers);
+				byte[] b = sendstream.ToArray ();
+				NetworkTransport.Send (hostId, recConnectionId, channelId, b, b.Length, out error);
+				break;
+			case MESSAGE_PEERS:
+				Debug.LogError ("Recieve peer list");
+				Dictionary<int, PeerData> remotepeers = (Dictionary<int, PeerData>) new BinaryFormatter().Deserialize(stream);
+				foreach (KeyValuePair<int, PeerData> peer in remotepeers) {
+					Debug.LogError ("Connect to peer: "+peer.Value.address+":"+peer.Value.port);
+					NetworkTransport.Connect(hostId, peer.Value.address, peer.Value.port, 0, out error);
+				}
 				break;
 			}
 			break;
