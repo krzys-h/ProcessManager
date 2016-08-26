@@ -180,7 +180,7 @@ public class ProcessManager : MonoBehaviour {
 	string remotePort = "8888";
 
 	void OnGUI() {
-		GUILayout.Label ("ProcessManager by krzys_h v0.1-beta");
+		GUILayout.Label ("ProcessManager by krzys_h v0.2-beta");
 		GUILayout.Label (hostId >= 0 ? "Server running on :" + serverPort : "Server not running");
 		remoteIp = GUILayout.TextField (remoteIp);
 		remotePort = GUILayout.TextField (remotePort);
