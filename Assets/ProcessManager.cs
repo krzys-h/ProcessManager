@@ -265,14 +265,16 @@ public class ProcessManager : MonoBehaviour {
 			{
 				if (!process.HasExited)
 				{
+					ProcessData processData;
 					if (!localProcessList.ContainsKey(process.Id)) {
 						if (GetProcessOwner(process.Id) != owner && owner != 0) continue;
-						localProcessList.Add(process.Id, new ProcessData());
-					}
-					ProcessData processData = localProcessList[process.Id];
+						processData = new ProcessData();
+						processData.name = GetProcessName(process.Id);
+						if (processData.name == "???") continue; // ignore zombie processes
+						localProcessList.Add(process.Id, processData);
+					} else processData = localProcessList[process.Id];
 					newProcessList.Add(process.Id, true);
 					//processData.name = process.ProcessName;
-					processData.name = GetProcessName(process.Id);
 					processData.memory = process.VirtualMemorySize64;
 				}
 			}
