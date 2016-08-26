@@ -175,8 +175,24 @@ public class ProcessManager : MonoBehaviour {
 		remotePort = GUILayout.TextField (remotePort);
 		if (GUILayout.Button ("Connect [C]"))
 			StartClient ();
-	}
 
+		string s = "";
+		foreach (KeyValuePair<int, PlayerProcessManager> player in playerProcessManagers) {
+			if(player.Key == 0) {
+				s += player.Key + ": 127.0.0.1:"+serverPort;
+			} else {
+				string address;
+				int port;
+				UnityEngine.Networking.Types.NetworkID network;
+				UnityEngine.Networking.Types.NodeID dstNode;
+				byte error;
+				NetworkTransport.GetConnectionInfo(hostId, player.Key, out address, out port, out network, out dstNode, out error);
+				s += "\n" + player.Key + ": " + address + ":" + port;
+			}
+		}
+		GUILayout.Label (s);
+	}
+	
 	public void UpdateProcesses () {
 		UpdateLocalProcessList ();
 		localProcessManager.UpdateProcesses (localProcessList);
