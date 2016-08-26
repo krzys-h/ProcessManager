@@ -34,15 +34,14 @@ public class ProcessManager : MonoBehaviour {
 	Dictionary<int, ProcessData> localProcessList = new Dictionary<int, ProcessData> ();
 	
 	int serverPort = 8888;
-	int peerId;
 
 	void Start () {
 		NetworkTransport.Init();
-		StartServer ();
-
-		peerId = (int)(Random.value * 65535);
 
 		localProcessManager = CreateProcessManager (0);
+		localProcessManager.peerId = (int)(Random.value * 65535);
+		
+		StartServer ();
 
 		InvokeRepeating ("UpdateProcesses", 0, 1.0f);
 	}
@@ -106,7 +105,7 @@ public class ProcessManager : MonoBehaviour {
 			CreateProcessManager(recConnectionId);
 			MemoryStream sendstream2 = new MemoryStream();
 			sendstream2.WriteByte (MESSAGE_GET_PEERS);
-			new BinaryFormatter().Serialize(sendstream2, peerId);
+			new BinaryFormatter().Serialize(sendstream2, localProcessManager.peerId);
 			byte[] b2 = sendstream2.ToArray ();
 			NetworkTransport.Send (hostId, recConnectionId, channelId, b2, b2.Length, out error);
 			break;
@@ -126,10 +125,13 @@ public class ProcessManager : MonoBehaviour {
 			case MESSAGE_GET_PEERS:
 				Debug.LogError ("Send peer list");
 				int remotePeerId = (int) new BinaryFormatter().Deserialize(stream);
-				if(remotePeerId == peerId) {
-					Debug.LogError ("Found peer id collision, disconnect");
-					NetworkTransport.Disconnect(hostId, recConnectionId, out error);
+				foreach (KeyValuePair<int, PlayerProcessManager> player in playerProcessManagers) {
+					if(remotePeerId == player.Value.peerId) {
+						Debug.LogError ("Duplicate connection "+recConnectionId+" with player "+player.Key+" detected, disconnect");
+						NetworkTransport.Disconnect(hostId, recConnectionId, out error);
+					}
 				}
+				playerProcessManagers[recConnectionId].peerId = remotePeerId;
 				Dictionary<int, PeerData> peers = new Dictionary<int, PeerData>();
 				foreach (KeyValuePair<int, PlayerProcessManager> player in playerProcessManagers) {
 					if(player.Key == 0) continue; // ignore local player

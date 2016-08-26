@@ -6,6 +6,7 @@ public class PlayerProcessManager : MonoBehaviour {
 	
 	public GameObject processObjectPrefab;
 	public int playerId;
+	public int peerId;
 	private Dictionary<int, GameObject> objects = new Dictionary<int, GameObject>();
 
 	// Use this for initialization
