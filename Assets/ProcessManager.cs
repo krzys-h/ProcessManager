@@ -27,7 +27,7 @@ public class ProcessManager : MonoBehaviour {
 	const byte MESSAGE_PEERS = 4;
 
 	int channelId;
-	int hostId;
+	int hostId = -1;
 	int connectionId;
 
 	PlayerProcessManager localProcessManager;
@@ -148,8 +148,10 @@ public class ProcessManager : MonoBehaviour {
 			break;
 		}
 
-		if (Input.GetKeyDown (KeyCode.X))
-			StartServer ();
+		if (hostId < 0) {
+			if (Input.GetKeyDown (KeyCode.X))
+				StartServer ();
+		}
 		if (Input.GetKeyDown (KeyCode.C))
 			StartClient ();
 	}
@@ -160,10 +162,12 @@ public class ProcessManager : MonoBehaviour {
 	void OnGUI() {
 		remoteIp = GUILayout.TextField (remoteIp);
 		serverPort = GUILayout.TextField (serverPort);
-		if (GUILayout.Button("Server [X]"))
-			StartServer();
-		if (GUILayout.Button("Connect [C]"))
-			StartClient();
+		if (hostId < 0) {
+			if (GUILayout.Button ("Server [X]"))
+				StartServer ();
+		}
+		if (GUILayout.Button ("Connect [C]"))
+			StartClient ();
 	}
 
 	public void UpdateProcesses () {
