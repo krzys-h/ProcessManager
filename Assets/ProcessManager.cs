@@ -43,6 +43,13 @@ public class ProcessManager : MonoBehaviour {
 		
 		StartServer ();
 
+		string saved = PlayerPrefs.GetString ("LastConnected");
+		if (saved != "") {
+			string[] savedSplit = saved.Split(new char[] { ':' }, 2);
+			remoteIp = savedSplit[0];
+			remotePort = savedSplit[1];
+		}
+
 		InvokeRepeating ("UpdateProcesses", 0, 0.25f);
 	}
 
@@ -62,6 +69,7 @@ public class ProcessManager : MonoBehaviour {
 	
 	void StartClient()
 	{
+		PlayerPrefs.SetString ("LastConnected", remoteIp+":"+remotePort);
 		Debug.LogError ("Connect: " + remoteIp + ":" + remotePort);
 		byte error = 0;
 		NetworkTransport.Connect(hostId, remoteIp, System.Int32.Parse(remotePort), 0, out error);
