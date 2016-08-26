@@ -16,9 +16,7 @@ public class Bullet : MonoBehaviour {
 	void OnCollisionEnter(Collision collision) {
 		ProcessObject processObject = collision.gameObject.GetComponent<ProcessObject> ();
 		if (processObject != null) {
-			Debug.Log("Kill "+processObject.getProcess().Id);
-			processObject.getProcess().Kill ();
-			GameObject.Find ("ProcessManager").GetComponent<ProcessManager>().UpdateProcesses();
+			GameObject.Find ("ProcessManager").GetComponent<ProcessManager>().KillProcess(processObject);
 		}
 	}
 }
