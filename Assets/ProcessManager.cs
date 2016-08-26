@@ -28,14 +28,19 @@ public class ProcessManager : MonoBehaviour {
 
 	int channelId;
 	int hostId = -1;
-	int connectionId;
 
 	PlayerProcessManager localProcessManager;
 	Dictionary<int, PlayerProcessManager> playerProcessManagers = new Dictionary<int, PlayerProcessManager>();
 	Dictionary<int, ProcessData> localProcessList = new Dictionary<int, ProcessData> ();
+	
+	int serverPort = 8888;
+	int peerId;
 
 	void Start () {
 		NetworkTransport.Init();
+		StartServer ();
+
+		peerId = (int)(Random.value * 65535);
 
 		localProcessManager = CreateProcessManager (0);
 
@@ -45,17 +50,22 @@ public class ProcessManager : MonoBehaviour {
 	void StartServer()
 	{
 		Debug.LogError ("Start server");
-		ConnectionConfig config = new ConnectionConfig();
-		channelId = config.AddChannel(QosType.ReliableFragmented);
-		HostTopology topology = new HostTopology(config, 10);
-		hostId = NetworkTransport.AddHost(topology, System.Int32.Parse(serverPort));
+		ConnectionConfig config = new ConnectionConfig ();
+		channelId = config.AddChannel (QosType.ReliableFragmented);
+		HostTopology topology = new HostTopology (config, 10);
+		for (serverPort = 8888; ; serverPort++) {
+			Debug.Log ("Try port "+serverPort);
+			hostId = NetworkTransport.AddHost (topology, serverPort);
+			if (hostId >= 0) break;
+		}
+		Debug.LogError ("Server started on " + serverPort);
 	}
 	
 	void StartClient()
 	{
-		Debug.LogError ("Connect: " + remoteIp);
+		Debug.LogError ("Connect: " + remoteIp + ":" + remotePort);
 		byte error = 0;
-		connectionId = NetworkTransport.Connect(hostId, remoteIp, System.Int32.Parse(serverPort), 0, out error);
+		NetworkTransport.Connect(hostId, remoteIp, System.Int32.Parse(remotePort), 0, out error);
 		if (error != 0) {
 			Debug.LogError ("Connection failed "+error);
 			return;
@@ -94,12 +104,11 @@ public class ProcessManager : MonoBehaviour {
 		case NetworkEventType.ConnectEvent:
 			Debug.Log ("Connected");
 			CreateProcessManager(recConnectionId);
-			if (recConnectionId == connectionId) {
-				MemoryStream stream = new MemoryStream();
-				stream.WriteByte (MESSAGE_GET_PEERS);
-				byte[] b = stream.ToArray ();
-				NetworkTransport.Send (hostId, recConnectionId, channelId, b, b.Length, out error);
-			}
+			MemoryStream sendstream2 = new MemoryStream();
+			sendstream2.WriteByte (MESSAGE_GET_PEERS);
+			new BinaryFormatter().Serialize(sendstream2, peerId);
+			byte[] b2 = sendstream2.ToArray ();
+			NetworkTransport.Send (hostId, recConnectionId, channelId, b2, b2.Length, out error);
 			break;
 		case NetworkEventType.DataEvent:
 			//Debug.Log ("DATA "+dataSize);
@@ -116,6 +125,11 @@ public class ProcessManager : MonoBehaviour {
 				break;
 			case MESSAGE_GET_PEERS:
 				Debug.LogError ("Send peer list");
+				int remotePeerId = (int) new BinaryFormatter().Deserialize(stream);
+				if(remotePeerId == peerId) {
+					Debug.LogError ("Found peer id collision, disconnect");
+					NetworkTransport.Disconnect(hostId, recConnectionId, out error);
+				}
 				Dictionary<int, PeerData> peers = new Dictionary<int, PeerData>();
 				foreach (KeyValuePair<int, PlayerProcessManager> player in playerProcessManagers) {
 					if(player.Key == 0) continue; // ignore local player
@@ -148,24 +162,17 @@ public class ProcessManager : MonoBehaviour {
 			break;
 		}
 
-		if (hostId < 0) {
-			if (Input.GetKeyDown (KeyCode.X))
-				StartServer ();
-		}
 		if (Input.GetKeyDown (KeyCode.C))
 			StartClient ();
 	}
 
 	string remoteIp = "127.0.0.1";
-	string serverPort = "8888";
+	string remotePort = "8888";
 
 	void OnGUI() {
+		GUILayout.Label (hostId >= 0 ? "Server running on :" + serverPort : "Server not running");
 		remoteIp = GUILayout.TextField (remoteIp);
-		serverPort = GUILayout.TextField (serverPort);
-		if (hostId < 0) {
-			if (GUILayout.Button ("Server [X]"))
-				StartServer ();
-		}
+		remotePort = GUILayout.TextField (remotePort);
 		if (GUILayout.Button ("Connect [C]"))
 			StartClient ();
 	}
