@@ -217,7 +217,10 @@ public class ProcessManager : MonoBehaviour {
 			if (player.Key == 0) continue; // ignore local player
 			byte error;
 			NetworkTransport.Send (hostId, player.Key, channelId, b, b.Length, out error);
-			if (error != 0) Debug.LogError ("Send error: "+error);
+			if (error != 0) {
+				Debug.LogError ("Send error: "+error);
+				NetworkTransport.Disconnect(hostId, player.Key, out error);
+			}
 		}
 	}
 
