@@ -22,6 +22,7 @@ public class ProcessObject : MonoBehaviour {
 		float x = ((float)process.memory) / 1024 / 1024 / 1024;
 		if (x > 15)
 			x = 15;
-		this.transform.localScale = new Vector3 (x, x, x);
+		transform.localScale = new Vector3 (x, x, x);
+		transform.position = new Vector3(transform.position.x, x / 2, transform.position.z);
 	}
 }
