@@ -7,11 +7,12 @@ public class PlayerProcessManager : MonoBehaviour {
 	public GameObject processObjectPrefab;
 	public int playerId;
 	public int peerId;
+	public Color color;
 	private Dictionary<int, GameObject> objects = new Dictionary<int, GameObject>();
 
 	// Use this for initialization
 	void Start () {
-	
+		color = new Color (Random.value, Random.value, Random.value);
 	}
 	
 	// Update is called once per frame
@@ -30,6 +31,7 @@ public class PlayerProcessManager : MonoBehaviour {
 				ProcessObject processObject = gameObject.GetComponent<ProcessObject>();
 				processObject.playerId = playerId;
 				processObject.processId = process.Key;
+				processObject.color = color;
 				objects.Add(process.Key, gameObject);
 			}
 			objects[process.Key].GetComponent<ProcessObject>().UpdateProcess(process.Value);

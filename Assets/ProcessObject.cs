@@ -5,6 +5,7 @@ public class ProcessObject : MonoBehaviour {
 
 	public int processId;
 	public int playerId;
+	public Color color;
 
 	private TextMesh text;
 
@@ -24,5 +25,6 @@ public class ProcessObject : MonoBehaviour {
 			x = 15;
 		transform.localScale = new Vector3 (x, x, x);
 		transform.position = new Vector3(transform.position.x, x / 2, transform.position.z);
+		gameObject.GetComponent<Renderer>().material.color = color;
 	}
 }
