@@ -43,7 +43,7 @@ public class ProcessManager : MonoBehaviour {
 		
 		StartServer ();
 
-		InvokeRepeating ("UpdateProcesses", 0, 1.0f);
+		InvokeRepeating ("UpdateProcesses", 0, 0.25f);
 	}
 
 	void StartServer()
