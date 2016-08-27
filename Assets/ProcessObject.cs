@@ -21,6 +21,8 @@ public class ProcessObject : MonoBehaviour {
 
 	public void UpdateProcess(ProcessManager.ProcessData process) {
 		float x = ((float)process.memory) / 1024 / 1024 / 1024;
+		if (x < 0.1f)
+			x = 0.1f;
 		if (x > 15)
 			x = 15;
 		transform.localScale = new Vector3 (x, x, x);
